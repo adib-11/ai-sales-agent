@@ -88,7 +88,7 @@ export default function ProductsDashboard({
     <div className="space-y-6">
       {isModalOpen && isUploadWidgetOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/70 transition-opacity"
+          className="fixed inset-0 z-[9998] bg-black/70 transition-opacity pointer-events-none"
           aria-hidden="true"
         />
       )}
