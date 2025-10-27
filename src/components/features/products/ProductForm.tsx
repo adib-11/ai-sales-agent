@@ -65,7 +65,7 @@ export default function ProductForm({ onSuccess, onUploadWidgetToggle }: Product
         setUploadError('Failed to read image file. Please try again.');
       };
       reader.readAsDataURL(file);
-    } catch (error) {
+    } catch {
       setUploadError('Failed to process image. Please try again.');
     }
   };
