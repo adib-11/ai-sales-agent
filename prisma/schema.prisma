@@ -1,0 +1,53 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  password_hash String
+  subdomain     String    @unique
+  created_at    DateTime  @default(now())
+  products      Product[]
+  facebookPageConnection FacebookPageConnection?
+
+  @@index([email])
+  @@index([subdomain])
+  @@map("users")
+}
+
+model Product {
+  id         String   @id @default(uuid())
+  user_id    String
+  name       String
+  price      String
+  image_url  String
+  created_at DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@map("products")
+}
+
+model FacebookPageConnection {
+  id                 String   @id @default(uuid())
+  user_id            String   @unique
+  facebook_page_id   String   @unique
+  page_access_token  String
+  page_name          String
+  connected_at       DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([facebook_page_id])
+  @@map("facebook_page_connections")
+}
