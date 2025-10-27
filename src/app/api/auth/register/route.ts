@@ -124,11 +124,19 @@ export async function POST(request: NextRequest) {
     );
   } catch (error) {
     console.error('Registration error:', error);
+    console.error('Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      type: typeof error,
+      DATABASE_URL_set: !!process.env.DATABASE_URL,
+      NODE_ENV: process.env.NODE_ENV,
+    });
     return NextResponse.json(
       {
         error: {
           code: 'INTERNAL_ERROR',
           message: 'An unexpected error occurred',
+          details: error instanceof Error ? error.message : 'Unknown error',
         },
       },
       { status: 500 }

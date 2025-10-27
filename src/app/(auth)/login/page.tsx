@@ -39,28 +39,7 @@ export default function LoginPage() {
         return;
       }
 
-      // Check if user has products to determine redirect destination
-      try {
-        const productsResponse = await fetch('/api/products');
-        if (productsResponse.ok) {
-          const products = await productsResponse.json();
-          
-          // If user has no products, redirect to add-first page
-          if (products.length === 0) {
-            router.push('/dashboard/products/add-first');
-          } else {
-            router.push('/dashboard/products');
-          }
-        } else {
-          // If we can't fetch products, default to products page
-          router.push('/dashboard/products');
-        }
-      } catch (fetchErr) {
-        console.error('Error fetching products:', fetchErr);
-        // On error, default to products page
-        router.push('/dashboard/products');
-      }
-      
+      router.push('/dashboard/products');
       router.refresh();
     } catch (err) {
       console.error('Login error:', err);
