@@ -149,6 +149,13 @@ export default function ProductForm({ onSuccess }: ProductFormProps) {
         <div className="flex flex-col gap-4">
           <CldUploadWidget
             uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || ''}
+            options={{
+              sources: ['local', 'url', 'camera'],
+              multiple: false,
+              maxFiles: 1,
+              folder: 'products',
+              resourceType: 'image',
+            }}
             onSuccess={handleUploadSuccess}
             onError={handleUploadError}
           >
