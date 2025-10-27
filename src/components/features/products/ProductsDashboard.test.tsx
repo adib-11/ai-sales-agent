@@ -12,15 +12,6 @@ vi.mock('next/navigation', () => ({
   })),
 }));
 
-// Mock next-cloudinary
-vi.mock('next-cloudinary', () => ({
-  CldUploadWidget: ({ children, onSuccess }: any) => (
-    <div data-testid="upload-widget">
-      {children({ open: vi.fn() })}
-    </div>
-  ),
-}));
-
 // Mock the toast hook
 vi.mock('@/hooks/use-toast', () => ({
   useToast: () => ({

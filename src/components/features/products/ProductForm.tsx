@@ -1,8 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { CldUploadWidget, type CloudinaryUploadWidgetResults } from 'next-cloudinary';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,6 +15,7 @@ interface ProductFormProps {
 
 export default function ProductForm({ onSuccess, onUploadWidgetToggle }: ProductFormProps) {
   const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({
     name: '',
     price: '',
@@ -36,20 +36,38 @@ export default function ProductForm({ onSuccess, onUploadWidgetToggle }: Product
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleUploadSuccess = (result: CloudinaryUploadWidgetResults) => {
-    if (result.info && typeof result.info !== 'string' && 'secure_url' in result.info) {
-      const secureUrl = result.info.secure_url;
-      setFormData(prev => ({ ...prev, imageUrl: secureUrl || '' }));
-      setUploadError('');
-      // Clear any previous image URL error
-      setErrors(prev => ({ ...prev, imageUrl: '' }));
-      notifyUploadWidgetState(false);
-    }
-  };
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-  const handleUploadError = () => {
-    setUploadError('Failed to upload image. Please try again.');
-    notifyUploadWidgetState(false);
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setUploadError('Please select a valid image file');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setUploadError('Image size must be less than 5MB');
+      return;
+    }
+
+    try {
+      // Convert to base64
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const base64String = event.target?.result as string;
+        setFormData(prev => ({ ...prev, imageUrl: base64String }));
+        setUploadError('');
+        setErrors(prev => ({ ...prev, imageUrl: '' }));
+      };
+      reader.onerror = () => {
+        setUploadError('Failed to read image file. Please try again.');
+      };
+      reader.readAsDataURL(file);
+    } catch (error) {
+      setUploadError('Failed to process image. Please try again.');
+    }
   };
 
   const validateForm = () => {
@@ -161,31 +179,22 @@ export default function ProductForm({ onSuccess, onUploadWidgetToggle }: Product
       <div className="space-y-2">
         <Label>Product Image *</Label>
         <div className="flex flex-col gap-4">
-          <CldUploadWidget
-            uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || ''}
-            options={{
-              sources: ['local', 'url', 'camera'],
-              multiple: false,
-              maxFiles: 1,
-              folder: 'products',
-              resourceType: 'image',
-            }}
-            onSuccess={handleUploadSuccess}
-            onError={handleUploadError}
-            onOpen={() => notifyUploadWidgetState(true)}
-            onClose={() => notifyUploadWidgetState(false)}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
+            className="hidden"
+            disabled={isSubmitting}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isSubmitting}
           >
-            {({ open }) => (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => open()}
-                disabled={isSubmitting}
-              >
-                {formData.imageUrl ? 'Change Image' : 'Upload Image'}
-              </Button>
-            )}
-          </CldUploadWidget>
+            {formData.imageUrl ? 'Change Image' : 'Upload Image'}
+          </Button>
           
           {uploadError && (
             <p className="text-sm text-red-500">{uploadError}</p>
