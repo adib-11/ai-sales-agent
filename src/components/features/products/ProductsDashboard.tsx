@@ -25,6 +25,7 @@ export default function ProductsDashboard({
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isUploadWidgetOpen, setIsUploadWidgetOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
 
@@ -85,6 +86,12 @@ export default function ProductsDashboard({
 
   return (
     <div className="space-y-6">
+      {isModalOpen && isUploadWidgetOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/70 transition-opacity"
+          aria-hidden="true"
+        />
+      )}
       {/* Header with Add Product Button */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
@@ -173,12 +180,15 @@ export default function ProductsDashboard({
       )}
 
       {/* Add Product Modal */}
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen} modal={!isUploadWidgetOpen}>
         <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Add New Product</DialogTitle>
           </DialogHeader>
-          <ProductForm onSuccess={handleProductAdded} />
+          <ProductForm 
+            onSuccess={handleProductAdded}
+            onUploadWidgetToggle={setIsUploadWidgetOpen}
+          />
         </DialogContent>
       </Dialog>
     </div>

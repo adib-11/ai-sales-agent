@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { CldUploadWidget, type CloudinaryUploadWidgetResults } from 'next-cloudinary';
 import Image from 'next/image';
@@ -11,9 +11,10 @@ import { Card, CardContent } from '@/components/ui/card';
 
 interface ProductFormProps {
   onSuccess?: () => void;
+  onUploadWidgetToggle?: (isOpen: boolean) => void;
 }
 
-export default function ProductForm({ onSuccess }: ProductFormProps) {
+export default function ProductForm({ onSuccess, onUploadWidgetToggle }: ProductFormProps) {
   const router = useRouter();
   const [formData, setFormData] = useState({
     name: '',
@@ -24,6 +25,17 @@ export default function ProductForm({ onSuccess }: ProductFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadError, setUploadError] = useState('');
 
+  const notifyUploadWidgetState = (isOpen: boolean) => {
+    onUploadWidgetToggle?.(isOpen);
+  };
+
+  useEffect(() => {
+    return () => {
+      notifyUploadWidgetState(false);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleUploadSuccess = (result: CloudinaryUploadWidgetResults) => {
     if (result.info && typeof result.info !== 'string' && 'secure_url' in result.info) {
       const secureUrl = result.info.secure_url;
@@ -31,11 +43,13 @@ export default function ProductForm({ onSuccess }: ProductFormProps) {
       setUploadError('');
       // Clear any previous image URL error
       setErrors(prev => ({ ...prev, imageUrl: '' }));
+      notifyUploadWidgetState(false);
     }
   };
 
   const handleUploadError = () => {
     setUploadError('Failed to upload image. Please try again.');
+    notifyUploadWidgetState(false);
   };
 
   const validateForm = () => {
@@ -158,6 +172,8 @@ export default function ProductForm({ onSuccess }: ProductFormProps) {
             }}
             onSuccess={handleUploadSuccess}
             onError={handleUploadError}
+            onOpen={() => notifyUploadWidgetState(true)}
+            onClose={() => notifyUploadWidgetState(false)}
           >
             {({ open }) => (
               <Button

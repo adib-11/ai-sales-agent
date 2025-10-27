@@ -11,15 +11,32 @@ vi.mock('next/navigation', () => ({
 
 // Mock Cloudinary Upload Widget
 vi.mock('next-cloudinary', () => ({
-  CldUploadWidget: ({ children, onSuccess }: { children: (helpers: { open: () => void }) => React.ReactNode; onSuccess: (result: { info: { secure_url: string } }) => void }) => {
+  CldUploadWidget: ({
+    children,
+    onSuccess,
+    onOpen,
+    onClose,
+    onError,
+  }: {
+    children: (helpers: { open: () => void }) => React.ReactNode;
+    onSuccess?: (result: { info: { secure_url: string } }) => void;
+    onOpen?: () => void;
+    onClose?: () => void;
+    onError?: () => void;
+  }) => {
     return children({
       open: () => {
-        // Simulate successful upload
-        onSuccess({
-          info: {
-            secure_url: 'https://cloudinary.com/test-image.jpg'
-          }
-        });
+        onOpen?.();
+        if (onSuccess) {
+          onSuccess({
+            info: {
+              secure_url: 'https://cloudinary.com/test-image.jpg'
+            }
+          });
+        } else {
+          onError?.();
+        }
+        onClose?.();
       }
     });
   }
@@ -187,5 +204,18 @@ describe('ProductForm', () => {
     await user.click(screen.getByRole('button', { name: /Add Product/i }));
 
     expect(screen.getByText(/Adding Product.../i)).toBeInTheDocument();
+  });
+
+  it('notifies parent when upload widget opens and closes', async () => {
+    const user = userEvent.setup();
+    const toggleSpy = vi.fn();
+
+    render(<ProductForm onUploadWidgetToggle={toggleSpy} />);
+
+    await user.click(screen.getByRole('button', { name: /Upload Image/i }));
+
+    expect(toggleSpy).toHaveBeenCalled();
+    expect(toggleSpy).toHaveBeenNthCalledWith(1, true);
+    expect(toggleSpy).toHaveBeenLastCalledWith(false);
   });
 });

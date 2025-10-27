@@ -226,8 +226,6 @@ describe('sendMessage', () => {
   });
 
   it('should retry on 5xx server errors', async () => {
-    vi.useFakeTimers();
-
     const mockFetch = vi.fn()
       .mockResolvedValueOnce({
         ok: false,
@@ -244,20 +242,21 @@ describe('sendMessage', () => {
 
     global.fetch = mockFetch;
 
-    const sendPromise = sendMessage(testToken, testRecipientId, testMessage);
+    const setTimeoutSpy = vi
+      .spyOn(global, 'setTimeout')
+      .mockImplementation(((...args: Parameters<typeof setTimeout>) => {
+        const [callback, _ms, ...callbackArgs] = args;
+        (callback as (...innerArgs: unknown[]) => void)(...callbackArgs);
+        return 0 as unknown as ReturnType<typeof setTimeout>;
+      }) as unknown as typeof setTimeout);
 
-    // Advance timers to trigger retry backoff
-    await vi.advanceTimersByTimeAsync(1000);
-
-    await sendPromise;
+    await sendMessage(testToken, testRecipientId, testMessage);
 
     expect(mockFetch).toHaveBeenCalledTimes(2);
-    vi.useRealTimers();
+    setTimeoutSpy.mockRestore();
   });
 
   it('should throw error after retry fails', async () => {
-    vi.useFakeTimers();
-
     const mockFetch = vi.fn()
       .mockResolvedValueOnce({
         ok: false,
@@ -272,15 +271,49 @@ describe('sendMessage', () => {
 
     global.fetch = mockFetch;
 
-    const sendPromise = sendMessage(testToken, testRecipientId, testMessage);
+    const setTimeoutSpy = vi
+      .spyOn(global, 'setTimeout')
+      .mockImplementation(((...args: Parameters<typeof setTimeout>) => {
+        const [callback, _ms, ...callbackArgs] = args;
+        (callback as (...innerArgs: unknown[]) => void)(...callbackArgs);
+        return 0 as unknown as ReturnType<typeof setTimeout>;
+      }) as unknown as typeof setTimeout);
 
-    // Advance timers to trigger retry
-    await vi.advanceTimersByTimeAsync(1000);
+    await expect(sendMessage(testToken, testRecipientId, testMessage)).rejects.toThrow('Facebook Send API error');
 
-    await expect(sendPromise).rejects.toThrow('Facebook Send API error');
     expect(mockFetch).toHaveBeenCalledTimes(2);
+    setTimeoutSpy.mockRestore();
+  });
 
-    vi.useRealTimers();
+  it('should throw error after retry fails', async () => {
+    const mockFetch = vi.fn()
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+        text: async () => 'Internal server error',
+      })
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+        text: async () => 'Still failing',
+      });
+
+    global.fetch = mockFetch;
+
+    const setTimeoutSpy = vi
+      .spyOn(global, 'setTimeout')
+      .mockImplementation(((...args: Parameters<typeof setTimeout>) => {
+        const [callback, _ms, ...callbackArgs] = args;
+        (callback as (...innerArgs: unknown[]) => void)(...callbackArgs);
+        return 0 as unknown as ReturnType<typeof setTimeout>;
+      }) as unknown as typeof setTimeout);
+
+    await expect(
+      sendMessage(testToken, testRecipientId, testMessage)
+    ).rejects.toThrow('Facebook Send API error');
+
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+    setTimeoutSpy.mockRestore();
   });
 
   it('should handle rate limit error (429)', async () => {
