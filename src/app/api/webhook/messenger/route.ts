@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyWebhookSignature, sendMessage } from '@/lib/facebook';
 import { generateChatbotResponse } from '@/lib/gemini';
+import { parseGeminiResponse } from '@/lib/chatbot-utils';
 import { decrypt } from '@/lib/encryption';
 import { prisma } from '@/lib/db';
 import type {
@@ -175,12 +176,16 @@ async function processMessagingEvent(
     const geminiDuration = Date.now() - geminiStart;
     console.log(`Gemini API completed in ${geminiDuration}ms`);
 
+    // Parse response for fallback signals
+    const parsed = parseGeminiResponse(aiResponse, productContext);
+    console.log(`Chatbot response type: ${parsed.type}`);
+
     // Decrypt Page access token
     const decryptedToken = decrypt(pageConnection.page_access_token);
 
-    // Send reply via Messenger
+    // Send reply via Messenger (use parsed message)
     const sendStart = Date.now();
-    await sendMessage(decryptedToken, senderId, aiResponse);
+    await sendMessage(decryptedToken, senderId, parsed.text);
     const sendDuration = Date.now() - sendStart;
     console.log(`Facebook Send API completed in ${sendDuration}ms`);
 

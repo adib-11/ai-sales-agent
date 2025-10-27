@@ -116,8 +116,9 @@ ${customerMessage}
 Instructions:
 - Answer concisely and helpfully
 - Only reference products from the catalog above
-- If the exact product is not found, suggest the closest alternative
-- If the question is completely unrelated to products, politely decline
+- **FALLBACK RULE 1**: If the question is completely unrelated to products (e.g., business hours, shipping, returns, location), respond EXACTLY with the word: OUT_OF_SCOPE
+- **FALLBACK RULE 2**: If the customer asks about a product variant not in the catalog (e.g., different color/size), start your response with: ALTERNATIVE: [Product Name] (where [Product Name] is the closest match from the catalog)
+- For normal product questions, answer naturally without special signals
 `;
 
   return prompt;

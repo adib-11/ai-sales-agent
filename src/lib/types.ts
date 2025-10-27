@@ -111,3 +111,13 @@ export interface ProductContext {
   name: string;
   price: string;
 }
+
+// Fallback response types
+export type FallbackType = 'normal' | 'out-of-scope' | 'alternative';
+
+// Parsed AI response with fallback detection
+export interface ParsedResponse {
+  type: FallbackType;
+  text: string;
+  suggestedProduct?: string; // Product name if type is 'alternative'
+}

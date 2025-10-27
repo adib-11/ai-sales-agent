@@ -277,4 +277,99 @@ describe('generateChatbotResponse', () => {
     expect(prompt).toContain('What colors do you have?');
     expect(prompt).toContain('Instructions:');
   });
+
+  it('should include OUT_OF_SCOPE instruction in prompt', async () => {
+    const mockResponse: GeminiResponse = {
+      candidates: [
+        {
+          content: {
+            parts: [{ text: 'OUT_OF_SCOPE' }],
+          },
+        },
+      ],
+    };
+
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => mockResponse,
+    });
+    global.fetch = mockFetch;
+
+    const products: ProductContext[] = [{ name: 'Red Mug', price: '$15.00' }];
+    await generateChatbotResponse(products, 'What are your hours?');
+
+    const callArgs = mockFetch.mock.calls[0];
+    const requestBody = JSON.parse(callArgs[1].body);
+    const prompt = requestBody.contents[0].parts[0].text;
+
+    // Verify fallback rule 1 is present
+    expect(prompt).toContain('FALLBACK RULE 1');
+    expect(prompt).toContain('OUT_OF_SCOPE');
+    expect(prompt).toContain('completely unrelated to products');
+  });
+
+  it('should include ALTERNATIVE instruction in prompt', async () => {
+    const mockResponse: GeminiResponse = {
+      candidates: [
+        {
+          content: {
+            parts: [{ text: 'ALTERNATIVE: Red Mug' }],
+          },
+        },
+      ],
+    };
+
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => mockResponse,
+    });
+    global.fetch = mockFetch;
+
+    const products: ProductContext[] = [{ name: 'Red Mug', price: '$15.00' }];
+    await generateChatbotResponse(products, 'Do you have a green mug?');
+
+    const callArgs = mockFetch.mock.calls[0];
+    const requestBody = JSON.parse(callArgs[1].body);
+    const prompt = requestBody.contents[0].parts[0].text;
+
+    // Verify fallback rule 2 is present
+    expect(prompt).toContain('FALLBACK RULE 2');
+    expect(prompt).toContain('ALTERNATIVE:');
+    expect(prompt).toContain('product variant not in the catalog');
+  });
+
+  it('should maintain existing prompt structure with fallback rules', async () => {
+    const mockResponse: GeminiResponse = {
+      candidates: [
+        {
+          content: {
+            parts: [{ text: 'The Red Mug costs $15.00' }],
+          },
+        },
+      ],
+    };
+
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => mockResponse,
+    });
+    global.fetch = mockFetch;
+
+    const products: ProductContext[] = [{ name: 'Red Mug', price: '$15.00' }];
+    await generateChatbotResponse(products, 'How much is the red mug?');
+
+    const callArgs = mockFetch.mock.calls[0];
+    const requestBody = JSON.parse(callArgs[1].body);
+    const prompt = requestBody.contents[0].parts[0].text;
+
+    // Verify all key sections are present
+    expect(prompt).toContain('helpful sales assistant');
+    expect(prompt).toContain('Product Catalog:');
+    expect(prompt).toContain('Customer Question:');
+    expect(prompt).toContain('Instructions:');
+    expect(prompt).toContain('FALLBACK RULE 1');
+    expect(prompt).toContain('FALLBACK RULE 2');
+    expect(prompt).toContain('For normal product questions');
+  });
 });
+
