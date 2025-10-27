@@ -166,7 +166,7 @@ export async function sendMessage(
         const error = new Error(`Facebook Send API error (${response.status}): ${errorText}`);
         
         // Add status to error for later checking
-        (error as any).status = response.status;
+        (error as Error & { status?: number }).status = response.status;
         
         console.error(`Facebook Send API error (${response.status}):`, errorText);
         throw error;
@@ -183,7 +183,9 @@ export async function sendMessage(
       lastError = error instanceof Error ? error : new Error('Unknown error');
       
       // Don't retry on 4xx errors (permanent failures)
-      if ((error as any).status >= 400 && (error as any).status < 500) {
+      if ((error as Error & { status?: number }).status && 
+          (error as Error & { status?: number }).status! >= 400 && 
+          (error as Error & { status?: number }).status! < 500) {
         console.error(`Send attempt ${attempt + 1}/${maxRetries + 1} failed:`, lastError.message);
         throw lastError;
       }
