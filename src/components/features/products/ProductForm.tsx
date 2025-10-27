@@ -26,7 +26,8 @@ export default function ProductForm({ onSuccess }: ProductFormProps) {
 
   const handleUploadSuccess = (result: CloudinaryUploadWidgetResults) => {
     if (result.info && typeof result.info !== 'string' && 'secure_url' in result.info) {
-      setFormData(prev => ({ ...prev, imageUrl: result.info.secure_url || '' }));
+      const secureUrl = result.info.secure_url;
+      setFormData(prev => ({ ...prev, imageUrl: secureUrl || '' }));
       setUploadError('');
       // Clear any previous image URL error
       setErrors(prev => ({ ...prev, imageUrl: '' }));

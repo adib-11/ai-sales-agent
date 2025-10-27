@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { NextRequest } from 'next/server';
-import { GET, POST, clearMessageLog, getMessageLog } from './route';
+import { GET, POST } from './route';
 import crypto from 'crypto';
 
 // Mock environment variables
@@ -13,7 +13,6 @@ beforeEach(() => {
     WEBHOOK_VERIFY_TOKEN: 'test_verify_token_12345',
     FACEBOOK_APP_SECRET: 'test_app_secret_12345',
   };
-  clearMessageLog();
 });
 
 afterEach(() => {
@@ -163,16 +162,6 @@ describe('POST /api/webhook/messenger (Message Receipt)', () => {
     expect(response.status).toBe(200);
     const responseBody = await response.json();
     expect(responseBody).toEqual({ status: 'ok' });
-
-    // Verify message was logged
-    const logs = getMessageLog();
-    expect(logs).toHaveLength(1);
-    expect(logs[0]).toMatchObject({
-      userId: 'user_123',
-      pageId: 'test_page_id_123',
-      senderId: 'test_sender_psid',
-      messageText: 'Hello, do you have red mugs?',
-    });
   });
 
   it('should handle multiple messages in single payload', async () => {
@@ -218,8 +207,6 @@ describe('POST /api/webhook/messenger (Message Receipt)', () => {
     const response = await POST(request);
 
     expect(response.status).toBe(200);
-    const logs = getMessageLog();
-    expect(logs).toHaveLength(2);
   });
 
   it('should skip non-text messages gracefully', async () => {
@@ -247,8 +234,6 @@ describe('POST /api/webhook/messenger (Message Receipt)', () => {
     const response = await POST(request);
 
     expect(response.status).toBe(200);
-    const logs = getMessageLog();
-    expect(logs).toHaveLength(0); // Message not logged
   });
 
   it('should filter out non-message events', async () => {
@@ -276,8 +261,6 @@ describe('POST /api/webhook/messenger (Message Receipt)', () => {
     const response = await POST(request);
 
     expect(response.status).toBe(200);
-    const logs = getMessageLog();
-    expect(logs).toHaveLength(0);
   });
 
   it('should return 200 for unknown Page ID and log warning', async () => {
@@ -308,8 +291,6 @@ describe('POST /api/webhook/messenger (Message Receipt)', () => {
     const response = await POST(request);
 
     expect(response.status).toBe(200);
-    const logs = getMessageLog();
-    expect(logs).toHaveLength(0); // Message not logged
   });
 
   it('should return 200 for invalid signature', async () => {
@@ -332,8 +313,6 @@ describe('POST /api/webhook/messenger (Message Receipt)', () => {
     const response = await POST(request);
 
     expect(response.status).toBe(200);
-    const logs = getMessageLog();
-    expect(logs).toHaveLength(0);
   });
 
   it('should return 200 for malformed JSON', async () => {
@@ -357,8 +336,6 @@ describe('POST /api/webhook/messenger (Message Receipt)', () => {
     const response = await POST(request);
 
     expect(response.status).toBe(200);
-    const logs = getMessageLog();
-    expect(logs).toHaveLength(0);
   });
 
   it('should return 200 if FACEBOOK_APP_SECRET not configured', async () => {

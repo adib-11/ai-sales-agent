@@ -197,19 +197,3 @@ async function processMessagingEvent(
     // Don't throw - we still want to return 200 to Facebook
   }
 }
-
-/**
- * Export message log for testing purposes
- * TODO: Remove in production when using database/queue
- */
-export function getMessageLog(): LoggedMessage[] {
-  return messageLog;
-}
-
-/**
- * Clear message log for testing purposes
- * TODO: Remove in production when using database/queue
- */
-export function clearMessageLog(): void {
-  messageLog.length = 0;
-}
