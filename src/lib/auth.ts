@@ -28,7 +28,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         // Import these only in the API route context, not in middleware
         const { prisma } = await import('./db');
-        const bcrypt = await import('bcrypt');
+        const bcrypt = await import('bcryptjs');
 
         const user = await prisma.user.findUnique({
           where: { email },
@@ -94,6 +94,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 });
 
 export async function hashPassword(password: string): Promise<string> {
-  const bcrypt = await import('bcrypt');
+  const bcrypt = await import('bcryptjs');
   return bcrypt.hash(password, 10);
 }

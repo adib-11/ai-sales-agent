@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 
 // Test password hashing directly with bcrypt to avoid NextAuth import issues
 describe('password hashing', () => {
