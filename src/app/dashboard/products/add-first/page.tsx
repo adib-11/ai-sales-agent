@@ -1,6 +1,8 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import ProductForm from '@/components/features/products/ProductForm';
 
+export const dynamic = 'force-dynamic';
+
 export default function AddFirstProductPage() {
   return (
     <div className="flex min-h-[calc(100vh-200px)] items-center justify-center p-4">

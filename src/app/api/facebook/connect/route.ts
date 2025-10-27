@@ -1,9 +1,12 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { generateStateToken } from '@/lib/facebook';
 import { cookies } from 'next/headers';
 
-export async function GET() {
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
+export async function GET(request: NextRequest) {
   try {
     // 1. Check authentication
     const session = await auth();
@@ -24,7 +27,7 @@ export async function GET() {
     const state = generateStateToken();
     
     // Store state in cookie for validation in callback
-    const cookieStore = await cookies();
+  const cookieStore = cookies();
     cookieStore.set('facebook_oauth_state', state, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -34,7 +37,8 @@ export async function GET() {
     });
 
     // 4. Build Facebook OAuth URL
-    const redirectUri = `${process.env.NEXTAUTH_URL}/api/facebook/callback`;
+  const baseUrl = process.env.NEXTAUTH_URL ?? request.nextUrl.origin;
+  const redirectUri = `${baseUrl}/api/facebook/callback`;
     const facebookAuthUrl = new URL('https://www.facebook.com/v21.0/dialog/oauth');
     facebookAuthUrl.searchParams.set('client_id', process.env.FACEBOOK_APP_ID);
     facebookAuthUrl.searchParams.set('redirect_uri', redirectUri);

@@ -1,20 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
-import {
-  exchangeCodeForToken,
-  getUserPages,
-} from '@/lib/facebook';
+import { exchangeCodeForToken, getUserPages } from '@/lib/facebook';
 import { encrypt } from '@/lib/encryption';
 import { prisma } from '@/lib/db';
 import { cookies } from 'next/headers';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function GET(request: NextRequest) {
+  const baseUrl = process.env.NEXTAUTH_URL ?? request.nextUrl.origin;
+
   try {
+
     // 1. Check authentication
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.redirect(
-        `${process.env.NEXTAUTH_URL}/dashboard/chatbot?error=unauthorized`
+        `${baseUrl}/dashboard/chatbot?error=unauthorized`
       );
     }
 
@@ -27,16 +30,16 @@ export async function GET(request: NextRequest) {
     // Handle user denial
     if (error === 'access_denied') {
       return NextResponse.redirect(
-        `${process.env.NEXTAUTH_URL}/dashboard/chatbot?error=user_denied`
+        `${baseUrl}/dashboard/chatbot?error=user_denied`
       );
     }
 
-    const cookieStore = await cookies();
+    const cookieStore = cookies();
     const savedState = cookieStore.get('facebook_oauth_state')?.value;
 
     if (!state || !savedState || state !== savedState) {
       return NextResponse.redirect(
-        `${process.env.NEXTAUTH_URL}/dashboard/chatbot?error=invalid_state`
+        `${baseUrl}/dashboard/chatbot?error=invalid_state`
       );
     }
 
@@ -45,12 +48,12 @@ export async function GET(request: NextRequest) {
 
     if (!code) {
       return NextResponse.redirect(
-        `${process.env.NEXTAUTH_URL}/dashboard/chatbot?error=no_code`
+        `${baseUrl}/dashboard/chatbot?error=no_code`
       );
     }
 
     // 3. Exchange code for user access token
-    const redirectUri = `${process.env.NEXTAUTH_URL}/api/facebook/callback`;
+    const redirectUri = `${baseUrl}/api/facebook/callback`;
     const userAccessToken = await exchangeCodeForToken(code, redirectUri);
 
     // 4. Fetch user's Pages
@@ -58,7 +61,7 @@ export async function GET(request: NextRequest) {
 
     if (pages.length === 0) {
       return NextResponse.redirect(
-        `${process.env.NEXTAUTH_URL}/dashboard/chatbot?error=no_pages`
+        `${baseUrl}/dashboard/chatbot?error=no_pages`
       );
     }
 
@@ -92,12 +95,12 @@ export async function GET(request: NextRequest) {
 
     // 9. Redirect to dashboard with success message
     return NextResponse.redirect(
-      `${process.env.NEXTAUTH_URL}/dashboard/chatbot?success=true`
+      `${baseUrl}/dashboard/chatbot?success=true`
     );
   } catch (error) {
     console.error('Facebook OAuth callback error:', error);
     return NextResponse.redirect(
-      `${process.env.NEXTAUTH_URL}/dashboard/chatbot?error=oauth_failed`
+      `${baseUrl}/dashboard/chatbot?error=oauth_failed`
     );
   }
 }

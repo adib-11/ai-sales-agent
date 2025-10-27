@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,7 +19,9 @@ import {
 import { PageConnectionStatus } from '@/lib/types';
 import { Loader2 } from 'lucide-react';
 
-export default function ChatbotIntegrationPage() {
+export const dynamic = 'force-dynamic';
+
+function ChatbotIntegrationContent() {
   const [status, setStatus] = useState<PageConnectionStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [disconnecting, setDisconnecting] = useState(false);
@@ -210,5 +212,19 @@ export default function ChatbotIntegrationPage() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+  );
+}
+
+export default function ChatbotIntegrationPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+        </div>
+      }
+    >
+      <ChatbotIntegrationContent />
+    </Suspense>
   );
 }
